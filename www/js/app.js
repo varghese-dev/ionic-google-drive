@@ -51,16 +51,20 @@ angular.module('starter', [
     .controller('AppCtrl', ['$rootScope', '$scope', function ($rootScope, $scope) {
 
     }])
-    .controller('WelcomeCtrl', function ($scope, Drive, $state) {
+    .controller('WelcomeCtrl', function ($scope, Drive, $state, $window) {
       $scope.loginByGoogle = function () {
 
-        var client_id = "452884761284-bark5bkplgau1vcj8re88ok6r2vg3l48.apps.googleusercontent.com";//web-app
-        var scopes = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/userinfo.email'];
-        Drive.authenticate(client_id, scopes, {redirect_uri: 'http://localhost/callback/'})
+        var scopes = [
+          'https://www.googleapis.com/auth/userinfo.profile',
+           'https://www.googleapis.com/auth/drive',
+            'https://www.googleapis.com/auth/drive.file',
+             'https://www.googleapis.com/auth/userinfo.email'
+            ];
+        Drive.authenticate(scopes, {redirect_uri: 'http://localhost/callback'})
             .then(function (response) {//authenticate
               if (response) {
+                //Access token received on authorization and to be sent as part of all requests
                 var token = response.access_token;
-                gapi.auth.setToken(response);
                 $state.go('drive');
               }
             },
@@ -72,6 +76,16 @@ angular.module('starter', [
     })
     .controller('DriveCtrl', function ($scope, Drive) {
       $scope.files = [];
+      $scope.userName = '';
+
+      $scope.about = function() {
+        Drive.about().then(function (about) {
+          $scope.userName = about.name;
+        }, function () {
+          console.log("About API failed");
+          $scope.userName = 'Error!';
+        });
+      }
 
       $scope.readFiles = function () {
         Drive.readFiles().then(function (files) {
@@ -81,6 +95,8 @@ angular.module('starter', [
           console.log("FileRead: error.");
         });
       };
+
+      $scope.about();
       $scope.readFiles();
 
     });

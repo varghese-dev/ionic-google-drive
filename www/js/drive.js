@@ -15,45 +15,79 @@
  */
 
 angular.module('starter')
-    .constant('apiKey', null)
+    // Client ID and API key from the Developer Console
+    .constant('apiKey', 'AIzaSyCsJ2NvIvoEBtKio7Y3fmjz_T337u8XHus')
+    .constant('clientId', '239085875192-irt8culfc6nej1si7iprnnmgdpphlrd5.apps.googleusercontent.com')
     .constant('applicationId', '')
     .constant('loadApis', {'drive': 'v2'})
 /**
  * Adapter for exposing gapi as an angular service. This registers a promise that will
  * resolve to gapi after all the APIs have been loaded.
  */
-    .factory('googleApi', ['$rootScope', '$window', '$q', 'apiKey', 'loadApis', '$ionicPlatform', function ($rootScope, $window, $q, apiKey, loadApis, $ionicPlatform) {
+    .factory('googleApi', ['$rootScope', '$window', '$q', 'apiKey', 'clientId', 'loadApis', '$ionicPlatform', function ($rootScope, $window, $q, apiKey, clientId, loadApis, $ionicPlatform) {
 
       var googleApi = $q.defer();
 
       var init_gapi = function () {
         $ionicPlatform.ready(function () {
           ///$rootScope.$apply(function() {
+          handleClientLoad();
+        });
+      };
+
+      
+      var CLIENT_ID = clientId;
+      var API_KEY = apiKey;
+
+      // Array of API discovery doc URLs for APIs used by the quickstart
+      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v2/rest"];
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      var SCOPES = "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.photos.readonly https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.apps.readonly";
+
+      /**
+       *  On load, called to load the auth2 library and API client library.
+       */
+      var handleClientLoad = function() {
+        gapi.load('client:auth2', initClient);
+      }
+
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      var initClient = function() {
+        gapi.client.init({
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        }).then(function () {
+          // Listen for sign-in state changes.
           var apis = [];
-          if (apiKey) {
-            $window.gapi.client.setApiKey(apiKey);
-          }
           angular.forEach(loadApis, function (value, key) {
             apis.push($q.when(gapi.client.load(key, value)));
           });
           $q.all(apis).then(function () {
-            googleApi.resolve($window.gapi);
+            googleApi.resolve(gapi);
           });
         });
       };
+
       init_gapi();
 
       return googleApi.promise;
     }])
-    .service('Drive', ['$q', '$cacheFactory', 'googleApi', 'applicationId', '$cordovaOauthUtility',
-      function ($q, $cacheFactory, googleApi, applicationId, $cordovaOauthUtility) {
+    .service('Drive', ['$q', '$cacheFactory', 'googleApi', 'applicationId', '$cordovaOauthUtility', 'clientId',
+      function ($q, $cacheFactory, googleApi, applicationId, $cordovaOauthUtility, clientId) {
 
         // Only fetch fields that we care about
         var DEFAULT_FIELDS = 'id,title,mimeType,userPermission,editable,copyable,shared,fileSize';
 
         var cache = $cacheFactory('files');
 
-        /**
+        /**http://localhost/callback
          * Combines metadata & content into a single object & caches the result
          *
          * @param {Object} metadata File metadata
@@ -88,7 +122,7 @@ angular.module('starter')
          * @return {Promise} promise that resolves on completion
          */
 
-        this.authenticate = function (clientId, appScope, options) {
+        this.authenticate = function (appScope, options) {
           /*
            * Sign into the Google service
            *
@@ -122,6 +156,10 @@ angular.module('starter')
                       parameterMap[responseParameters[i].split("=")[0]] = responseParameters[i].split("=")[1];
                     }
                     if (parameterMap.access_token !== undefined && parameterMap.access_token !== null) {
+                      //Set token for subsequent requests
+                      gapi.client.setToken({
+                        access_token: parameterMap.access_token
+                      });
                       deferred.resolve(parameterMap);
                       //deferred.resolve({ state : parameterMap.state,error : parameterMap.error, access_token: parameterMap.access_token, token_type: parameterMap.token_type, expires_in: parameterMap.expires_in });
                     } else {
@@ -142,6 +180,21 @@ angular.module('starter')
             return deferred.promise;
         };
 
+        /**
+         * Information about the current user along with the Drive API
+         * settings.
+         */
+        this.about = function about() {
+          var deferred = $q.defer();
+          var request = gapi.client.drive.about.get();
+          request.execute(function (resp) {
+            deferred.resolve(resp);
+          }, function(error) {
+            deferred.reject(error);
+          });
+          return deferred.promise;
+        };
+
 
         this.readFiles = function listFiles() {
           /*
@@ -150,7 +203,7 @@ angular.module('starter')
 
           var deffer = $q.defer();
           var request = gapi.client.drive.files.list({
-            'maxResults': 20
+            'maxResults': 10
           });
 
           request.execute(function (resp) {
@@ -163,9 +216,8 @@ angular.module('starter')
               }
               deffer.resolve(read_files);
             } else {
-              deffer.reject("No files found");
-              //appendPre('No files found.');
               console.log("No files found");
+              deffer.reject("No files found");
             }
           });
           return deffer.promise;

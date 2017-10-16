@@ -19,9 +19,17 @@ with the necessary dependencies to run and test this app:
      ```
 
 ------------------
-Step-2: (Configure Plugins)
+Step-2: (Configure Platforms & Plugins)
 =======
-[no longer needed]
+With Ionic CLI (less than 3.0)
+  ```
+  $ ionic state restore 
+  ```
+
+With Ionic CLI (>= 3.0)
+  ```
+  $ionic cordova prepare
+  ```
 
 
 Step-3: (Set up google-application on https://console.developers.google.com)
@@ -31,12 +39,12 @@ Create a new project E.g. 'google-drive-test'
 
 open this 'google-drive-test' project. 
 
-Goto APIs & auth -> Credentials
+Goto APIs & services -> Credentials
  
  Move to 2nd Tab on top 'OAuth consent screen' 
  provide a 'Product Name' for your app E.g. "Google Drive Test App 2.0" and hit 'save' button. 
 
-Move back to 1st Tab 'Credentials' on top and click 'Add credentials' button to get a client Id for your application. 
+Move back to 1st Tab 'Credentials' on top and click 'Create credentials' button to get a client Id for your application. 
 
  Select 'OAuth 2.0 client ID' option.
  Select 'Web-application' option.
@@ -47,10 +55,13 @@ Move back to 1st Tab 'Credentials' on top and click 'Add credentials' button to 
     like 'http:localhost/callback/', this redirect-uri must match with the redirect-uri of your call. 
      
 
- Click 'Create' button and you'll have 'client_id' for your app. :)  Update the existing 'client_id' in www/js/app.js with this new 'client_id' that is issued for your app.
+ Click 'Create' button and you'll have 'client_id' for your app. :)  Update the existing 'clientIdd' in declared constants www/js/drive.js with this new 'client_id' that is issued for your app.
+
+ Click 'Create Credentials' button to get an API Key for your application.. Update the existing 'apiKey' in declared constants www/js/drive.js with this new apiKey that is issued for your app. 
+
 
  Finally, you just need to enable google-drive api for your app;
-    Goto: APIs & auth -> APIs
+    Goto: APIs & services -> Library
     and in search type 'drive', Now hit the 'Drive API' option.
     press the 'Enable API' button on top and you're done.
 
@@ -66,7 +77,7 @@ Depending on your platform, device or emulator try the base code.
 
 i.e. 'ionic run andorid' if you have an android device properly connected.  
 
-Note that by design, OAuth in ionic does not support running in the borwser since the callback url is for mobile.  In other words you can not use 'ionic serve' when trying OAuth.  See https://github.com/nraboy/ng-cordova-oauth/issues/46 regarding this.
+Note that by design, OAuth in ionic does not support running in the browser since the callback url is for mobile.  In other words you can not use 'ionic serve' when trying OAuth.  See https://github.com/nraboy/ng-cordova-oauth/issues/46 regarding this.
 
 -------------
 
@@ -77,18 +88,12 @@ How does it work? how do I extend it?
  
     this.authenticateViaGoogle = function (user) {
        var defer = $q.defer();
-       var client_id = "452884761284-bark5bkplgau1vcj8re88ok6r2vg3l48.apps.googleusercontent.com";//web-app
        var scopes = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/userinfo.email'];
   
-       Drive.authenticate(client_id, scopes, {redirect_uri: 'http://localhost/callback/'})
+       Drive.authenticate(scopes, {redirect_uri: 'http://localhost/callback/'})
            .then(function (response) {
              if (response) {
-               //console.log("UserInfo: " + JSON.stringify(response));
                token = response.access_token;
-               gapi.auth.setToken(response);
-               //email= response.authResponse.email;
-               authenticated = true;
-               defer.resolve('authenticated');
              }
            },
            function (error) {
@@ -103,9 +108,7 @@ How does it work? how do I extend it?
  
  once you receive response-token-object. You can use access_token for your authorization scheme.
  
- Lastly, you just need to set this response/token in 'gapi' javascript client library, to accommodate any further calls using gapi library
-
- like this : gapi.auth.setToken(response);
+Received access_token will be set within Drive service for API requests.
 
  You can see in drive.js how we're loading 'google-drive' client to use with the 'gapi' javascript client library.
  
