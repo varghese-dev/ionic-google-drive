@@ -28,7 +28,7 @@ With Ionic CLI (less than 3.0)
 
 With Ionic CLI (>= 3.0)
   ```
-  $ionic cordova prepare
+  $ ionic cordova prepare
   ```
 
 
