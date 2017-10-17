@@ -48,11 +48,11 @@ Move back to 1st Tab 'Credentials' on top and click 'Create credentials' button 
 
  Select 'OAuth 2.0 client ID' option.
  Select 'Web-application' option.
- Put a redirect-uri for your application e.g. 'http://localhost/callback/'
+ Put a redirect-uri for your application e.g. 'http://localhost/callback'
   
   Note: Authorized-redirect-uri can be any page where google can redirect user after login. 
     If you're implementing a purely Javascript based application where you don't have a backend. you can put any valid URL 
-    like 'http:localhost/callback/', this redirect-uri must match with the redirect-uri of your call. 
+    like 'http:localhost/callback', this redirect-uri must match with the redirect-uri of your call. 
      
 
  Click 'Create' button and you'll have 'client_id' for your app. :)  Update the existing 'clientIdd' in declared constants www/js/drive.js with this new 'client_id' that is issued for your app.
