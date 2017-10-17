@@ -19,7 +19,7 @@ angular.module('starter')
     .constant('apiKey', 'AIzaSyCsJ2NvIvoEBtKio7Y3fmjz_T337u8XHus')
     .constant('clientId', '239085875192-irt8culfc6nej1si7iprnnmgdpphlrd5.apps.googleusercontent.com')
     .constant('applicationId', '')
-    .constant('loadApis', {'drive': 'v2'})
+    .constant('loadApis', {'drive': 'v3'})
 /**
  * Adapter for exposing gapi as an angular service. This registers a promise that will
  * resolve to gapi after all the APIs have been loaded.
@@ -40,7 +40,7 @@ angular.module('starter')
       var API_KEY = apiKey;
 
       // Array of API discovery doc URLs for APIs used by the quickstart
-      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v2/rest"];
+      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 
       // Authorization scopes required by the API; multiple scopes can be
       // included, separated by spaces.
@@ -186,7 +186,9 @@ angular.module('starter')
          */
         this.about = function about() {
           var deferred = $q.defer();
-          var request = gapi.client.drive.about.get();
+          var request = gapi.client.drive.about.get({
+            'fields': 'user'
+          });
           request.execute(function (resp) {
             deferred.resolve(resp);
           }, function(error) {
@@ -196,25 +198,30 @@ angular.module('starter')
         };
 
 
-        this.readFiles = function listFiles() {
+        this.readFiles = function listFiles(nextPageToken) {
           /*
            * Print files.
            **/
 
           var deffer = $q.defer();
           var request = gapi.client.drive.files.list({
-            'maxResults': 10
+            'pageSize': 25,
+            'pageToken': nextPageToken
           });
 
           request.execute(function (resp) {
-            var files = resp.items;
+            console.log(resp);
+            var files = resp.files;
             var read_files = [];
             if (files && files.length > 0) {
               for (var i = 0; i < files.length; i++) {
                 var file = files[i];
-                read_files.push({name: file.title, id: file.id});
+                read_files.push({name: file.name, id: file.id});
               }
-              deffer.resolve(read_files);
+              deffer.resolve({
+                nextPageToken: resp.nextPageToken,
+                files: read_files
+              });
             } else {
               console.log("No files found");
               deffer.reject("No files found");

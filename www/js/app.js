@@ -77,10 +77,12 @@ angular.module('starter', [
     .controller('DriveCtrl', function ($scope, Drive) {
       $scope.files = [];
       $scope.userName = '';
+      $scope.nextPageToken = '';
+      $scope.moredata = true;
 
       $scope.about = function() {
         Drive.about().then(function (about) {
-          $scope.userName = about.name;
+          $scope.userName = about.user.displayName;
         }, function () {
           console.log("About API failed");
           $scope.userName = 'Error!';
@@ -88,11 +90,22 @@ angular.module('starter', [
       }
 
       $scope.readFiles = function () {
-        Drive.readFiles().then(function (files) {
-          $scope.files = files;
+        Drive.readFiles($scope.nextPageToken).then(function (data) {
+          if($scope.files.length >= 100) {
+              $scope.moredata=true;
+          }
+          else {
+            for (var index = 0; index < data.files.length; index++) {
+              $scope.files.push(data.files[index]);   
+            }
+            $scope.nextPageToken = data.nextPageToken;
+            $scope.moredata = false;
+          }
           console.log("FileRead: success.");
+          $scope.$broadcast('scroll.infiniteScrollComplete');
         }, function () {
           console.log("FileRead: error.");
+          $scope.$broadcast('scroll.infiniteScrollComplete');
         });
       };
 

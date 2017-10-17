@@ -4,7 +4,8 @@
     <h1 class="title">Drive</h1>
   </div>
   <div class="bar bar-subheader">
-      <h2 class="title">Hello, {{userName}}</h2>
+      <h2 class="title">Hello, {{userName}}</h2><br>
+      <div style="text-align:right;">{{files.length}} items</div>
     </div>
   <ion-content class="has-subheader">
     <ion-list>
@@ -14,5 +15,9 @@
         </ion-item>
       </div>
     </ion-list>
+    <ion-infinite-scroll distance="2%"
+    on-infinite="readFiles()"
+    ng-if="!moredata"
+    ></ion-infinite-scroll>
   </ion-content>
 </ion-view>
